@@ -1,62 +1,79 @@
-const API_URL = 'http://localhost:5000/ordens';
+// O endereço do seu app.py conforme informado
+const API_BASE_URL = 'http://10.129.224.164:5000';
 
-// Função para carregar as ordens do banco de dados
+const showToast = (msg) => {
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerText = msg;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+};
+
+// Buscar todas as ordens
 async function carregarOrdens() {
+    const loader = document.getElementById('loader');
+    const tbody = document.querySelector('#tabelaOrdens tbody');
+    
+    loader.classList.remove('hidden');
+    tbody.innerHTML = '';
+
     try {
-        const response = await fetch(API_URL);
+        const response = await fetch(`${API_BASE_URL}/ordens`);
         const ordens = await response.json();
         
-        const tbody = document.querySelector('#tabelaOrdens tbody');
-        tbody.innerHTML = ''; // Limpa a tabela antes de carregar
+        document.getElementById('contador').innerText = `${ordens.length} Ordens ativas`;
 
-        ordens.forEach(ordem => {
+        ordens.forEach(o => {
             const tr = document.createElement('tr');
+            // Formata o status para CSS
+            const statusClass = o.status.toLowerCase().replace(' ', '-');
+            
             tr.innerHTML = `
-                <td>${ordem.id}</td>
-                <td>${ordem.produto}</td>
-                <td>${ordem.quantidade}</td>
-                <td class="status-${ordem.status.toLowerCase().replace(' ', '')}">${ordem.status}</td>
-                <td>${new Date(ordem.criado_em).toLocaleString('pt-BR')}</td>
+                <td>#${o.id}</td>
+                <td style="font-weight:600">${o.produto}</td>
+                <td>${o.quantidade}</td>
+                <td><span class="status-tag ${statusClass}">${o.status}</span></td>
+                <td style="color:#64748b; font-size:12px">${o.criado_em}</td>
             `;
             tbody.appendChild(tr);
         });
-    } catch (error) {
-        console.error('Erro ao carregar ordens:', error);
+    } catch (err) {
+        showToast('Erro ao conectar com o servidor!');
+        console.error(err);
+    } finally {
+        loader.classList.add('hidden');
     }
 }
 
-// Função para criar uma nova ordem
+// Criar nova ordem
 document.getElementById('formOrdem').addEventListener('submit', async (e) => {
-    e.preventDefault(); // Impede a página de recarregar
-
-    const produto = document.getElementById('produto').value;
-    const quantidade = document.getElementById('quantidade').value;
-
-    const novaOrdem = {
-        produto: produto,
-        quantidade: parseInt(quantidade),
+    e.preventDefault();
+    
+    const dados = {
+        produto: document.getElementById('produto').value,
+        quantidade: document.getElementById('quantidade').value,
         status: 'Pendente'
     };
 
     try {
-        const response = await fetch(API_URL, {
+        const response = await fetch(`${API_BASE_URL}/ordens`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(novaOrdem)
+            body: JSON.stringify(dados)
         });
 
         if (response.ok) {
-            alert('Ordem criada com sucesso!');
-            document.getElementById('formOrdem').reset(); // Limpa o form
-            carregarOrdens(); // Atualiza a tabela
+            showToast('Ordem criada com sucesso!');
+            document.getElementById('formOrdem').reset();
+            carregarOrdens();
         } else {
-            const erro = await response.json();
-            alert('Erro: ' + erro.erro);
+            showToast('Erro ao validar dados.');
         }
-    } catch (error) {
-        console.error('Erro ao criar ordem:', error);
+    } catch (err) {
+        showToast('Erro de conexão!');
     }
 });
 
-// Inicia carregando os dados quando a página abre
-carregarOrdens();
+// Inicialização
+window.onload = carregarOrdens;

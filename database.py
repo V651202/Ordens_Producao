@@ -1,48 +1,53 @@
-# Database > Creation and configuration of SQLite database
+#CRIAÇÃO E CONFIGURAÇÃO DO BANCO DE DADO SQLITE
 import sqlite3
 
-# Constant with name of the database
-# The file will be created during the first execution
-db_order = 'ordens.bd'
+#Constante com o nome do arquivo de banco de dados
+#O arquivo será criado durante a primeira execução
+bd_ordem = 'ordens.db'
 
 def get_connection():
     '''
-    Create and return a connection with SQLite database
+    Cria e retorna uma conexão com o banco de dados SQLite
     
-    The property row_factory allows the access of the columns by name
-    (Ex: order['product'] instead of index (Ex: order[1]))
+    A propriedade row_factory permite acessar as colunas pelo nome
+    (Ex: ordem['produto'] em vez de pelo índice(Ex:ordem[1]))
     
-    Return:
-        sqlite3.Connection: Connection object with database
+    Retorna:
+        sqlite3.Connection: objeto de conexão com o banco de dados.
     '''
-    
-    conn = sqlite3.connect(db_order)
+    conn = sqlite3.connect(bd_ordem)
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
     '''
-    Initialize database creating a table named 'orders' if does not exists. 
-    Safe to call multiple times.
+    Inicializa o banco de dados criando a tabela 'ordens' se ela ainda não
+    existir. Seguro para chamar múltiplas vezes.
     '''
-    
     conn = get_connection()
-
-    # Cursor allows the execution of SQL commands
+    
+    # Cursor() permitir executar comandos SQL
     cursor = conn.cursor()
-
-    # 'IF NOT EXISTS' ensures the command don't fails if the table exists
+    
+    #IF NOT EXIST garantir que o comando não falhe se a tabela já exixtir
+    
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    product TEXT NOT NULL,
-    quantity INTEGER NOT NULL,
-    status TEXT DEFAULT 'Pendent',
-    created_at TEXT DEFAULT (datetime('now', 'localtime'))
-    )
-    ''')
-
-    # commit() Saves changes in .db file
+                   CREATE TABLE IF NOT EXISTS ordens(
+                       id INTEGER PRIMARY KEY AUTOINCREMENT,
+                       produto      TEXT        NOT NULL,
+                       quantidade   INTEGER     NOT NULL,
+                       status       TEXT        DEFAULT 'Pendente',
+                       criado_em    TEXT        DEFAULT(datetime('now','localtime'))
+                       )
+                       ''')
+    
+    #commit() Salvar as alterações no arquivo .bd
     conn.commit()
+    
+    #close() liberar a conexão(boa prática)
     conn.close()
-    print("Database successfully initialized!")
+    
+    print("Banco de dados inicializado com sucesso!")
+
+
+init_db()
